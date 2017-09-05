@@ -16,3 +16,12 @@
 * Set the Authority app setting in the Resource.api project to the specific localhost and port running the IDP application
 * Using Postman, navigate to the IDP localhost:<port>/connect/token
 * Copy the token returned and use it as the Authorization when requesting a url from the Resource.api
+   
+## Postman Setup
+To properly utilize Postman to retrieve a valid token, the following x-www-form-urlencoded values will need to be set:
+* client_id: this will match the client id specified in InMemoryManager.GetClients()
+* client_secret: this will match one or more of the ClientSecrets in InMemoryManager.GetClients()
+* scope: typically openid, but will match one of the scopes defined in InMemoryManager.GetScopes()
+* grant_type: password
+* username: must match one of the defined InMemoryUser usernames in InMemoryManager.GetUsers()
+* password: must match one of the defined InMemoryUser passwords in InMemoryManager.GetUsers()
