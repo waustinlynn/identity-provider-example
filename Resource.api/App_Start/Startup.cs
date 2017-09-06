@@ -7,6 +7,13 @@ using IdentityServer3.AccessTokenValidation;
 using System.IdentityModel.Tokens;
 using System.Security.Cryptography.X509Certificates;
 using System.Configuration;
+using Microsoft.Owin.Security.OpenIdConnect;
+using System.Collections.Generic;
+using Microsoft.AspNet.Identity;
+using Microsoft.Owin.Security.Cookies;
+using Thinktecture.IdentityModel.Clients;
+using System.Security.Claims;
+using Microsoft.Owin.Security;
 
 [assembly: OwinStartup(typeof(Resource.api.App_Start.Startup))]
 
@@ -34,10 +41,58 @@ namespace Resource.api.App_Start
             //    }
             //});
 
-            app.UseIdentityServerBearerTokenAuthentication(new IdentityServerBearerTokenAuthenticationOptions
+            //app.UseIdentityServerBearerTokenAuthentication(new IdentityServerBearerTokenAuthenticationOptions
+            //{
+            //    Authority = ConfigurationManager.AppSettings["Authority"]
+            //});
+
+            JwtSecurityTokenHandler.InboundClaimTypeMap = new Dictionary<string, string>();
+
+
+            app.UseCookieAuthentication(new CookieAuthenticationOptions
             {
-                Authority = ConfigurationManager.AppSettings["Authority"]
+                AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
+                ExpireTimeSpan = TimeSpan.FromSeconds(15)
             });
+
+            try
+            {
+                app.UseOpenIdConnectAuthentication(new OpenIdConnectAuthenticationOptions
+                {
+                    ClientId = "idp_code",
+                    Authority = ConfigurationManager.AppSettings["Authority"],
+                    RedirectUri = "http://localhost:57300/",
+                    ResponseType = "code id_token",
+                    Scope = "openid profile offline_access",
+                    PostLogoutRedirectUri = "http://localhost:57300",
+                    SignInAsAuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
+
+                    Notifications = new OpenIdConnectAuthenticationNotifications
+                    {
+                        AuthorizationCodeReceived = async notification =>
+                        {
+                            var requestResponse = await OidcClient.CallTokenEndpointAsync(
+                                new Uri("http://localhost:49936/connect/token"),
+                                new Uri("http://localhost:57300/"),
+                                notification.Code,
+                                "idp_code",
+                                "secret");
+
+                            var identity = notification.AuthenticationTicket.Identity;
+
+                            identity.AddClaim(new Claim("access_token", requestResponse.AccessToken));
+                            identity.AddClaim(new Claim("id_token", requestResponse.IdentityToken));
+                            identity.AddClaim(new Claim("refresh_token", requestResponse.RefreshToken));
+
+                            notification.AuthenticationTicket = new AuthenticationTicket(identity, notification.AuthenticationTicket.Properties);
+                        }
+                    }
+
+                });
+            }catch(Exception ex)
+            {
+
+            }
 
             app.UseWebApi(config);
         }

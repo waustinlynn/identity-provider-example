@@ -15,11 +15,11 @@ namespace IDP
         public void Configuration(IAppBuilder app)
         {
             // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=316888
+            //Log.Logger = new LoggerConfiguration()
             var inMemoryManager = new InMemoryManager();
             var factory = new IdentityServerServiceFactory().UseInMemoryUsers(inMemoryManager.GetUsers()).UseInMemoryScopes(inMemoryManager.GetScopes()).UseInMemoryClients(inMemoryManager.GetClients());
             var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
 
-            
 
             var certificatePath = ConfigurationManager.AppSettings["SecurityKeyPath"];
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
-
+using Resource.api.Filters;
 namespace Resource.api
 {
     public static class WebApiConfig
@@ -19,6 +19,8 @@ namespace Resource.api
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            //config.Filters.Add(new IdpAuth());
         }
     }
 }
